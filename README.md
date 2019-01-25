@@ -14,10 +14,10 @@
 最外层是CoordinatorLayout，里面主要就分两块，AppBarLayout+ViewPager（AppBarLayout里面包含标题栏的Toolbar+TabLayout，ViewPager用来切换Fragment显示）
 
 为了使得Toolbar有滑动效果，必须做到如下三点: 
-1. CoordinatorLayout作为布局的父布局容器。 
+1. CoordinatorLayout作为布局的父布局容器。CoordinatorLayout本身可以看做一个FrameLayout，其内部控件的布局和FrameLayout一致。在需要动态关联的控件上分别加上app:layout_scrollFlags和app:layout_behavior属性
 2. 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。 
 3. 滑动的组件必须是AppBarLayout顶部组件。 
-4. 给滑动的组件设置app:layout_behavior属性 
+4. 给滑动的组件设置app:layout_behavior属性
 5.ViewPager显示的Fragment里面不能是ListView，必须是RecyclerView。
 
 2.toolbar
