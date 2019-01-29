@@ -2,8 +2,11 @@ package com.bao.design.Fragment;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentHostCallback;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,6 +25,7 @@ import com.bao.design.Entry.Top250Entry;
 import com.bao.design.R;
 import com.bao.design.http.HttpMethods;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,13 +44,14 @@ public class FragmentTop250 extends MyFragment {
     private int viewPagerCurItem=0;
     private int curMovieIndex = 0;
 
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.from(getActivity()).inflate(R.layout.layout_fragment_top250,null);
         initView(view);
         initPullRefresh(view);
-        return view;
+       return view;
     }
 
     private void initPullRefresh(View view) {
@@ -55,38 +60,12 @@ public class FragmentTop250 extends MyFragment {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                HttpMethods.getInstance().getTop250(new DisposableObserver<Top250Entry.Subject>() {
-                    @Override
-                    public void onNext(Top250Entry.Subject subject) {
-                        movieSubjects.add(0,subject);
-                        Log.d(TAG,subject.getTitle());
-                        recyclerViewAdapteradapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {        }
-
-                    @Override
-                    public void onComplete() {
-                        Toast.makeText(getActivity(), "加载完成!", Toast.LENGTH_SHORT).show();
-                        swipeRefreshLayout.setRefreshing(false);//进度条消失
-                    }
-                },curMovieIndex+=5,5);
+                updateTop250();
             }
         });
     }
-
-    private void initView(View view) {
-        Toast.makeText(getActivity(), "加载中，请稍候!", Toast.LENGTH_SHORT).show();
-        RecyclerView recyclerView = view.findViewById(R.id.id_recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        movieSubjects = new ArrayList<>();
-        recyclerViewAdapteradapter = new FragmentTop250RecyclerViewAdapter(getActivity(),R.layout.layout_fragment_top250_item,movieSubjects);
-        recyclerView.setAdapter(recyclerViewAdapteradapter);
-
-        View headView = LayoutInflater.from(getActivity()).inflate(R.layout.layout_fragment_top250_header,null);
-        initRollImage(headView);
-        ((FragmentTop250RecyclerViewAdapter) recyclerViewAdapteradapter).addHeader(headView);
+    private void updateTop250()
+    {
         HttpMethods.getInstance().getTop250(new DisposableObserver<Top250Entry.Subject>() {
             @Override
             public void onNext(Top250Entry.Subject subject) {
@@ -96,7 +75,10 @@ public class FragmentTop250 extends MyFragment {
             }
 
             @Override
-            public void onError(Throwable e) {        }
+            public void onError(Throwable e) {
+                Toast.makeText(getActivity(), e.toString(), Toast.LENGTH_SHORT).show();
+                swipeRefreshLayout.setRefreshing(false);//进度条消失
+                 }
 
             @Override
             public void onComplete() {
@@ -104,8 +86,36 @@ public class FragmentTop250 extends MyFragment {
                 swipeRefreshLayout.setRefreshing(false);//进度条消失
             }
         },curMovieIndex+=5,5);
-
     }
+    private void initView(View view) {
+        Toast.makeText(getActivity(), "加载中，请稍候!", Toast.LENGTH_SHORT).show();
+        RecyclerView recyclerView = view.findViewById(R.id.id_recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        movieSubjects = new ArrayList<>();
+        recyclerViewAdapteradapter = new FragmentTop250RecyclerViewAdapter(getActivity(),R.layout.layout_fragment_top250_item,movieSubjects);
+        recyclerView.setAdapter(recyclerViewAdapteradapter);
+        recyclerView.addOnScrollListener(pullUpRefresh);
+
+        View headView = LayoutInflater.from(getActivity()).inflate(R.layout.layout_fragment_top250_header,null);
+        initRollImage(headView);
+        ((FragmentTop250RecyclerViewAdapter) recyclerViewAdapteradapter).addHeader(headView);
+
+        updateTop250();
+    }
+
+    private RecyclerView.OnScrollListener pullUpRefresh = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            RecyclerView.LayoutManager mLayoutManager = recyclerView.getLayoutManager();
+            int lastVisibleItem = ((LinearLayoutManager) mLayoutManager).findLastVisibleItemPosition();
+            int totalItemCount = mLayoutManager.getItemCount();
+            if (lastVisibleItem >= totalItemCount-1 && dy > 0) {//最后一项显示且是下滑的时候调用加载
+                updateTop250();
+                //需要自己设置排除多次重复调用
+            }
+        }
+    };
 
     private void initRollImage(final View view) {
         final ViewPager viewPager = view.findViewById(R.id.id_viewPager);
