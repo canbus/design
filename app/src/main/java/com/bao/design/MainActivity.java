@@ -1,12 +1,19 @@
 package com.bao.design;
 
+import android.support.design.internal.BottomNavigationItemView;
+import android.support.design.internal.BottomNavigationMenuView;
+import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bao.design.http.HttpMethods;
@@ -27,8 +34,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drawerLayout = findViewById(R.id.drawerlayout);
         initClickListener();
         initView();
-
+        //initUnreadNum();
         //initTitle();
+    }
+
+    private void initUnreadNum() { //未读信息显示
+//        BottomNavigationView navigationView = findViewById(R.id.id_bottomNV);
+//        BottomNavigationMenuView menuView = (BottomNavigationMenuView) navigationView.getChildAt(0);
+//        View tab = menuView.getChildAt(0);
+//        BottomNavigationItemView itemView = (BottomNavigationItemView) tab;
+//        View badge = LayoutInflater.from(this).inflate(R.layout.layout_unread_num, menuView, false);
+//        itemView.addView(badge);
+//        TextView count = (TextView) badge.findViewById(R.id.tv_msg_count);
+//        count.setText("1");
     }
 
     private void initImageLoad() {

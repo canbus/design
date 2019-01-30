@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentHostCallback;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -43,7 +44,7 @@ public class FragmentTop250 extends MyFragment {
     private String mTitle;
     private int viewPagerCurItem=0;
     private int curMovieIndex = 0;
-
+    private ContentLoadingProgressBar progressBar;
 
     @Nullable
     @Override
@@ -77,17 +78,31 @@ public class FragmentTop250 extends MyFragment {
             @Override
             public void onError(Throwable e) {
                 Toast.makeText(getActivity(), e.toString(), Toast.LENGTH_SHORT).show();
-                swipeRefreshLayout.setRefreshing(false);//进度条消失
-                 }
+                progressBarDismis();
+            }
 
             @Override
             public void onComplete() {
                 Toast.makeText(getActivity(), "加载完成!", Toast.LENGTH_SHORT).show();
-                swipeRefreshLayout.setRefreshing(false);//进度条消失
+                progressBarDismis();
             }
         },curMovieIndex+=5,5);
     }
+
+    private void progressBarDismis() {
+        swipeRefreshLayout.setRefreshing(false);//进度条消失
+        Observable.timer(2,TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Long>() {
+                    @Override
+                    public void accept(Long aLong) throws Exception {
+                        progressBar.hide();
+                    }
+                });
+    }
+
     private void initView(View view) {
+        progressBar = view.findViewById(R.id.id_progressbar);
         Toast.makeText(getActivity(), "加载中，请稍候!", Toast.LENGTH_SHORT).show();
         RecyclerView recyclerView = view.findViewById(R.id.id_recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -103,6 +118,7 @@ public class FragmentTop250 extends MyFragment {
         updateTop250();
     }
 
+    //上拉刷新
     private RecyclerView.OnScrollListener pullUpRefresh = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -111,13 +127,16 @@ public class FragmentTop250 extends MyFragment {
             int lastVisibleItem = ((LinearLayoutManager) mLayoutManager).findLastVisibleItemPosition();
             int totalItemCount = mLayoutManager.getItemCount();
             if (lastVisibleItem >= totalItemCount-1 && dy > 0) {//最后一项显示且是下滑的时候调用加载
-                updateTop250();
+                if(progressBar.getVisibility() != View.VISIBLE)
+                    updateTop250();
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.show();
                 //需要自己设置排除多次重复调用
             }
         }
     };
 
-    private void initRollImage(final View view) {
+    private void initRollImage(final View view) { //图片轮播
         final ViewPager viewPager = view.findViewById(R.id.id_viewPager);
         int imageRes[] = new int[]{R.drawable.c1,R.mipmap.ic_item_like};
         final String imageUrl[] = new String[]{"https://img3.doubanio.com/view/photo/s_ratio_poster/public/p480747492.webp"
